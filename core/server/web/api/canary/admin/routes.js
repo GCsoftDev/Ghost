@@ -237,5 +237,53 @@ module.exports = function apiRoutes() {
     router.get('/emails/:id', mw.authAdminApi, http(apiCanary.emails.read));
     router.put('/emails/:id/retry', mw.authAdminApi, http(apiCanary.emails.retry));
 
+    // ## Custom Api for Gamalon
+    let folder_name;
+    router.get('/gamalon/:folder_name', mw.authAdminApi, (req, res) => {
+        const testFolder = `./content/themes/${req.params.folder_name}/card-layouts/`;
+        folder_name = req.params.folder_name;
+        const fs = require('fs');
+        try {
+            const fileArray = fs.readdirSync(testFolder);
+            res.send(fileArray);
+        } catch (err) {
+            res.send([]);
+        }
+        res.status = 200;
+    })
+
+    router.get('/gamalon-svg/:file_name', mw.authAdminApi, (req, res) => {
+        const svgFile = `./content/themes/${folder_name}/card-layouts/${req.params.file_name}/icon.svg`;
+        const fs = require('fs');
+        try {
+            fs.readFile(svgFile, 'utf8', (e, data) => {
+                if (e) console.log(e);
+                res.send({contentData: data});
+            });
+        } catch (err) {
+            res.send([]);
+        }
+        res.status = 200;
+    })
+
+    router.get('/gamalon-content/:file_name', mw.authAdminApi, (req, res) => {
+        const cssFile = `./content/themes/${folder_name}/card-layouts/${req.params.file_name}/${req.params.file_name}.css`;
+        const jsFile = `./content/themes/${folder_name}/card-layouts/${req.params.file_name}/${req.params.file_name}.hbs`;
+        const fs = require('fs');
+        try {
+            fs.readFile(cssFile, 'utf8', (e, data) => {
+                if (e) console.log(e);
+                const cssContent = data;
+                fs.readFile(jsFile, 'utf8', (e, data) => {
+                    if (e) console.log(e);
+                    res.send({contentData: `<style>\n${cssContent}\n</style>\n${data}`});
+                });
+            });
+        } catch (err) {
+            res.send([]);
+        }
+        res.status = 200;
+    })
+
     return router;
 };
