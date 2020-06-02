@@ -275,14 +275,19 @@ module.exports = function apiRoutes() {
         const jsFile = `./content/themes/${activeTheme}/card-layouts/${req.params.file_name}/${req.params.file_name}.hbs`;
         const fs = require('fs');
         try {
-            fs.readFile(cssFile, 'utf8', (e, data) => {
-                if (e) console.log(e);
-                const cssContent = data;
-                fs.readFile(jsFile, 'utf8', (e, data) => {
-                    if (e) console.log(e);
-                    res.send({contentData: `<style>\n${cssContent}\n</style>\n${data}`});
-                });
-            });
+            let returnData = '';
+
+            const cssFileContent = fs.readFileSync(cssFile, 'utf8');
+            const jsFileContent = fs.readFileSync(jsFile, 'utf8');
+
+            if (cssFileContent.length !== 0) {
+                returnData += `<style>\n${cssFileContent}\n</style>\n`
+            }
+
+            if (jsFileContent.length !== 0) {
+                returnData += jsFileContent;
+            }
+            res.send({contentData: returnData});
         } catch (err) {
             res.send([]);
         }
