@@ -238,28 +238,30 @@ module.exports = function apiRoutes() {
     router.put('/emails/:id/retry', mw.authAdminApi, http(apiCanary.emails.retry));
 
     // ## Custom Api for Gamalon
-    let folder_name;
-    router.get('/gamalon/:folder_name', mw.authAdminApi, (req, res) => {
-        const testFolder = `./content/themes/${req.params.folder_name}/card-layouts/`;
-        folder_name = req.params.folder_name;
+    router.get('/gamalon', mw.authAdminApi, (req, res) => {
+        const settingsCache = require('../../../../services/settings/cache');
+        const activeTheme = settingsCache.get('active_theme');
+        const testFolder = `./content/themes/${activeTheme}/card-layouts/`;
+        
         const fs = require('fs');
         try {
             const fileArray = fs.readdirSync(testFolder);
-            res.send(fileArray);
-        } catch (err) {
-            res.send([]);
-        }
-        res.status = 200;
-    })
-
-    router.get('/gamalon-svg/:file_name', mw.authAdminApi, (req, res) => {
-        const svgFile = `./content/themes/${folder_name}/card-layouts/${req.params.file_name}/icon.svg`;
-        const fs = require('fs');
-        try {
-            fs.readFile(svgFile, 'utf8', (e, data) => {
-                if (e) console.log(e);
-                res.send({contentData: data});
-            });
+            let gamalon = {
+                title: 'Gamalon',
+                items: []
+            }
+            gamalon.items = fileArray.map((fileLabel) => {
+                const svgFile = `./content/themes/${activeTheme}/card-layouts/${fileLabel}/icon.svg`;
+                return {
+                    label: fileLabel,
+                    icon: fs.readFileSync(svgFile, 'utf8'),
+                    iconClass: 'kg-card-type-native',
+                    matches: ['html'],
+                    type: 'card',
+                    replaceArg: 'html'
+                }
+            })
+            res.send(gamalon);
         } catch (err) {
             res.send([]);
         }
@@ -267,8 +269,10 @@ module.exports = function apiRoutes() {
     })
 
     router.get('/gamalon-content/:file_name', mw.authAdminApi, (req, res) => {
-        const cssFile = `./content/themes/${folder_name}/card-layouts/${req.params.file_name}/${req.params.file_name}.css`;
-        const jsFile = `./content/themes/${folder_name}/card-layouts/${req.params.file_name}/${req.params.file_name}.hbs`;
+        const settingsCache = require('../../../../services/settings/cache');
+        const activeTheme = settingsCache.get('active_theme');
+        const cssFile = `./content/themes/${activeTheme}/card-layouts/${req.params.file_name}/${req.params.file_name}.css`;
+        const jsFile = `./content/themes/${activeTheme}/card-layouts/${req.params.file_name}/${req.params.file_name}.hbs`;
         const fs = require('fs');
         try {
             fs.readFile(cssFile, 'utf8', (e, data) => {
